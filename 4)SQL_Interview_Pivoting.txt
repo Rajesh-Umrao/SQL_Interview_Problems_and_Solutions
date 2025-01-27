@@ -1,0 +1,60 @@
+	Problem statement
+
+	Table: Person
+ 	+----+------------------+
+	| Id | Email            |
+	+----+------------------+
+	| 1  | john@example.com |
+	| 2  | bob@example.com  |
+	| 3  | john@example.com |
+	+----+------------------+
+	Id is the primary key column for this table. While Email column can have duplicate Email entries 
+
+	Write a SQL query to delete all duplicate email entries in a table, keeping 
+	only unique emails based on its smallest Id
+
+
+	For example, after running your query, the above Person table should have the following rows:
+
+	+----+------------------+
+	| Id | Email            |
+	+----+------------------+
+	| 1  | john@example.com |
+	| 2  | bob@example.com  |
+	+----+------------------+
+	
+	Note:
+  	Your output is the whole Person table after executing your SQL. Use delete statement.
+
+_____________________________________________________________________________________________________________________________________
+SOLUTION 
+	
+
+ --WRONG APPROACH     
+		WITH cte AS (
+    		SELECT 
+			id,
+    			ROW_NUMBER() OVER (PARTITION BY Email ORDER BY id) AS ranked
+    		FROM person)
+
+		-- SELECT * FROM CTE 
+		-- WHERE RANKED>1
+
+		DELETE FROM cte
+		WHERE ranked >1 
+
+
+----------------------------------------------------------------------------------
+
+--RIGHT APPROACH 
+		WITH cte AS (
+    		SELECT 
+			id,
+    			ROW_NUMBER() OVER (PARTITION BY Email ORDER BY id) AS ranked
+    		FROM person)
+
+		DELETE FROM person
+		WHERE id IN (
+        	SELECT id FROM cte
+        	where ranked>1 );
+		select * from person
