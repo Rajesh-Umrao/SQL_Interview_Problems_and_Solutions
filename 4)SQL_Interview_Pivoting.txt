@@ -1,60 +1,101 @@
-	Problem statement
+Problem statement
+Table: Department
 
-	Table: Person
- 	+----+------------------+
-	| Id | Email            |
-	+----+------------------+
-	| 1  | john@example.com |
-	| 2  | bob@example.com  |
-	| 3  | john@example.com |
-	+----+------------------+
-	Id is the primary key column for this table. While Email column can have duplicate Email entries 
-
-	Write a SQL query to delete all duplicate email entries in a table, keeping 
-	only unique emails based on its smallest Id
-
-
-	For example, after running your query, the above Person table should have the following rows:
-
-	+----+------------------+
-	| Id | Email            |
-	+----+------------------+
-	| 1  | john@example.com |
-	| 2  | bob@example.com  |
-	+----+------------------+
-	
-	Note:
-  	Your output is the whole Person table after executing your SQL. Use delete statement.
-
-_____________________________________________________________________________________________________________________________________
-SOLUTION 
-	
-
- --WRONG APPROACH     
-		WITH cte AS (
-    		SELECT 
-			id,
-    			ROW_NUMBER() OVER (PARTITION BY Email ORDER BY id) AS ranked
-    		FROM person)
-
-		-- SELECT * FROM CTE 
-		-- WHERE RANKED>1
-
-		DELETE FROM cte
-		WHERE ranked >1 
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| id            | int     |
+| revenue       | int     |
+| month         | varchar |
++---------------+---------+
+(id, month) is the primary key of this table.
+The table has information about the revenue of each department per month.
+The month has values in ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].
 
 
-----------------------------------------------------------------------------------
+Write an SQL query to reformat the table such that there is a department id column and a revenue column for each month.
 
---RIGHT APPROACH 
-		WITH cte AS (
-    		SELECT 
-			id,
-    			ROW_NUMBER() OVER (PARTITION BY Email ORDER BY id) AS ranked
-    		FROM person)
+The query result format is in the following example:
 
-		DELETE FROM person
-		WHERE id IN (
-        	SELECT id FROM cte
-        	where ranked>1 );
-		select * from person
+Department table:
++------+---------+-------+
+| id   | revenue | month |
++------+---------+-------+
+| 1    | 8000    | Jan   |
+| 2    | 9000    | Jan   |
+| 3    | 10000   | Feb   |
+| 1    | 7000    | Feb   |
+| 1    | 6000    | Mar   |
++------+---------+-------+
+
+Result table:
++------+-------------+-------------+-------------+-----+-------------+
+| id   | Jan_Revenue | Feb_Revenue | Mar_Revenue | ... | Dec_Revenue |
++------+-------------+-------------+-------------+-----+-------------+
+| 1    | 8000        | 7000        | 6000        | ... | null        |
+| 2    | 9000        | null        | null        | ... | null        |
+| 3    | null        | 10000       | null        | ... | null        |
++------+-------------+-------------+-------------+-----+-------------+
+
+Note that the result table has 13 columns (1 for the department id + 12 for the months).
+
+______________________________________________________________________________________________________________________________________________________________
+
+SOLUTION
+SELECT
+    id,
+    MAX(CASE WHEN month = 'Jan' THEN revenue END) AS Jan_Revenue,
+    MAX(CASE WHEN month = 'Feb' THEN revenue END) AS Feb_Revenue,
+    MAX(CASE WHEN month = 'Mar' THEN revenue END) AS Mar_Revenue,
+    MAX(CASE WHEN month = 'Apr' THEN revenue END) AS Apr_Revenue,
+    MAX(CASE WHEN month = 'May' THEN revenue END) AS May_Revenue,
+    MAX(CASE WHEN month = 'Jun' THEN revenue END) AS Jun_Revenue,
+    MAX(CASE WHEN month = 'Jul' THEN revenue END) AS Jul_Revenue,
+    MAX(CASE WHEN month = 'Aug' THEN revenue END) AS Aug_Revenue,
+    MAX(CASE WHEN month = 'Sep' THEN revenue END) AS Sep_Revenue,
+    MAX(CASE WHEN month = 'Oct' THEN revenue END) AS Oct_Revenue,
+    MAX(CASE WHEN month = 'Nov' THEN revenue END) AS Nov_Revenue,
+    MAX(CASE WHEN month = 'Dec' THEN revenue END) AS Dec_Revenue
+FROM Department
+GROUP BY id
+ORDER BY id;
+
+
+
+_______________________________________________________________________________________________________________________________________________
+PRACTICE QUESTION
+A U.S graduate school has students from Asia, Europe and America. The students' location information are stored in table student as below.
+
+
+| name   | continent |
+|--------|-----------|
+| Jack   | America   |
+| Pascal | Europe    |
+| Xi     | Asia      |
+| Jane   | America   |
+
+
+Pivot the continent column in this table so that each name is sorted alphabetically and displayed underneath its corresponding continent. The output headers should be America, Asia and Europe respectively. It is guaranteed that the student number from America is no less than either Asia or Europe.
+
+
+For the sample input, the output is:
+
+
+| America | Asia | Europe |
+|---------|------|--------|
+| Jack    | Xi   | Pascal |
+| Jane    |      |        |
+
+_____________________________________________________________________________________________________________________________________________________________________
+
+SOLUTION OF PRACTICE QUESTION
+SELECT
+    MAX(CASE WHEN continent = 'America' THEN name END) AS America,
+    MAX(CASE WHEN continent = 'Asia' THEN name END) AS Asia,
+    MAX(CASE WHEN continent = 'Europe' THEN name END) AS Europe
+FROM (
+    SELECT name, continent,
+           ROW_NUMBER() OVER (PARTITION BY continent ORDER BY name) AS row_num
+    FROM student
+) AS subquery
+GROUP BY row_num;
