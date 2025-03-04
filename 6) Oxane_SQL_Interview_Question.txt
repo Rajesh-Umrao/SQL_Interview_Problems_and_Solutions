@@ -1,0 +1,134 @@
+Customer table	 
+             +------+--------+
+             | ID   | Name   |
+             +------+--------+
+             | 1    |  ABC   |
+             | 2    |  PQR   |
+             | 3    |  XYZ   |
+             +------+--------+
+ 
+Order  table
+             +------------+--------+---------+
+              |   Date    |  ID    | Amount  |
+             +------------+--------+---------+
+              |  02-Apr   |   2    |  518    |
+              |  05-Apr   |   2    |  1000   |
+              |  10-Apr   |   3    |  1025   |
+              |  14-Apr   |   2    |  1948   |
+              |  19-Apr   |   3    |  1034   |
+              |  23-Apr   |   1    |  1944   |
+              |  04-May   |   1    |  1365   |
+              |  08-May   |   2    |  868    |
+              |  12-May   |   2    |  611    |
+              |  13-May   |   1    |  1178   |
+              |  18-May   |   1    |  860    |
+              |  21-May   |   3    |  616    |
+              |  27-May   |   1    |  1056   |
+              |  29-May   |   2    |  52     |
+              +-----------+--------+---------+
+       
+ 
+Ques: You need to write an SQL query to generate a monthly summary to find out the 
+      name of the customer who has made the max purchase (total amount) in a month.
+
+
+OUTPUT	 
+	      +----------+--------+---------------+
+              |   Month  |  Name  | Total Amount  |
+              +----------+--------+---------------+
+              |   April	 |   PQR  |  3466         |
+              |   May    |   ABC  |  4459         |
+              +----------+--------+---------------+
+
+
+______________________________________________________________________
+Solution 
+
+WITH MonthlySummary AS (
+    SELECT 
+        c.ID,
+        c.Name,
+        MONTH(o.OrderDate) AS Month,
+        SUM(o.Amount) AS TotalAmount
+    FROM 
+        Customer c
+    JOIN 
+        Orders o 
+    ON 
+        c.ID = o.CustomerID  --  join on CustomerID
+    GROUP BY 
+        c.ID, c.Name, MONTH(o.OrderDate)
+        
+),
+
+-- select * from MonthlySummary
+
+RankedSummary AS (
+    SELECT 
+        ID,
+        Name,
+        Month,
+        TotalAmount,
+        RANK() OVER (PARTITION BY Month ORDER BY TotalAmount DESC) AS rnk
+    FROM 
+        MonthlySummary
+)
+-- select * from RankedSummary
+
+
+SELECT 
+    DATENAME(MONTH, DATEFROMPARTS(2024, Month, 1)) AS MonthName,
+    Name,
+    TotalAmount
+FROM 
+    RankedSummary
+WHERE 
+    rnk = 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
